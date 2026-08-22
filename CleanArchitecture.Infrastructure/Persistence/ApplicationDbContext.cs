@@ -4,6 +4,7 @@ using CleanArchitecture.Infrastructure.Identity.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using CleanArchitecture.Domain.Entities;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace CleanArchitecture.Infrastructure.Persistence;
 
@@ -20,9 +21,16 @@ public sealed class ApplicationDbContext : IdentityDbContext<ApplicationUser>, I
 
     public DbSet<Category> Categories => Set<Category>();
 
+    public DbSet<Order> Orders => Set<Order>();
+
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+
     public DbSet<Product> Products => Set<Product>();
 
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken)
+        => Database.BeginTransactionAsync(cancellationToken);
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
