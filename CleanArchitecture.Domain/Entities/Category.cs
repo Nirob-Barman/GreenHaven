@@ -50,6 +50,25 @@ public sealed class Category : BaseEntity
         MarkUpdated();
     }
 
+    public void SetImage(string imageUrl, string? imagePublicId)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl))
+        {
+            throw new DomainException("Category image URL is required.");
+        }
+
+        ImageUrl = imageUrl;
+        ImagePublicId = imagePublicId;
+        MarkUpdated();
+    }
+
+    public void RemoveImage()
+    {
+        ImageUrl = null;
+        ImagePublicId = null;
+        MarkUpdated();
+    }
+
     public void Deactivate()
     {
         IsActive = false;

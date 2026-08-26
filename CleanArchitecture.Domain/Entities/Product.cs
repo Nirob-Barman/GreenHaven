@@ -95,6 +95,25 @@ public sealed class Product : BaseEntity
         MarkUpdated();
     }
 
+    public void SetPrimaryImage(string primaryImageUrl, string? primaryImagePublicId)
+    {
+        if (string.IsNullOrWhiteSpace(primaryImageUrl))
+        {
+            throw new DomainException("Product image URL is required.");
+        }
+
+        PrimaryImageUrl = primaryImageUrl;
+        PrimaryImagePublicId = primaryImagePublicId;
+        MarkUpdated();
+    }
+
+    public void RemovePrimaryImage()
+    {
+        PrimaryImageUrl = string.Empty;
+        PrimaryImagePublicId = null;
+        MarkUpdated();
+    }
+
     public void ChangeStock(int quantityInStock)
     {
         if (quantityInStock < 0)

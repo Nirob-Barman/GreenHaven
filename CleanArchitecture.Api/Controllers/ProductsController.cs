@@ -1,8 +1,10 @@
 using CleanArchitecture.Application.Common.Models;
 using CleanArchitecture.Application.Features.Products.Commands.CreateProduct;
 using CleanArchitecture.Application.Features.Products.Commands.DeleteProduct;
+using CleanArchitecture.Application.Features.Products.Commands.DeleteProductImage;
 using CleanArchitecture.Application.Features.Products.Commands.UpdateProduct;
 using CleanArchitecture.Application.Features.Products.Commands.UpdateProductStock;
+using CleanArchitecture.Application.Features.Products.Commands.UploadProductImage;
 using CleanArchitecture.Application.Features.Products.Common;
 using CleanArchitecture.Application.Features.Products.Queries.GetProductById;
 using CleanArchitecture.Application.Features.Products.Queries.GetProductBySlug;
@@ -71,6 +73,32 @@ public sealed class ProductsController : ControllerBase
         CancellationToken cancellationToken)
     {
         return Ok(await _mediator.Send(command with { Id = id }, cancellationToken));
+    }
+
+    [Authorize(Policy = "RequireAdmin")]
+    [HttpPost("{id:int}/image")]
+    public async Task<ActionResult<ImageUploadResultDto>> UploadImage(
+        int id,
+        IFormFile? file,
+        CancellationToken cancellationToken)
+    {
+        await using var stream = file?.OpenReadStream() ?? Stream.Null;
+        var command = new UploadProductImageCommand(
+            id,
+            stream,
+            file?.FileName ?? string.Empty,
+            file?.ContentType ?? string.Empty,
+            file?.Length ?? 0);
+
+        return Ok(await _mediator.Send(command, cancellationToken));
+    }
+
+    [Authorize(Policy = "RequireAdmin")]
+    [HttpDelete("{id:int}/image")]
+    public async Task<IActionResult> DeleteImage(int id, CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new DeleteProductImageCommand(id), cancellationToken);
+        return NoContent();
     }
 
     [Authorize(Policy = "RequireAdmin")]

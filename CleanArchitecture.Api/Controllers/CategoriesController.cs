@@ -1,6 +1,9 @@
+using CleanArchitecture.Application.Common.Models;
 using CleanArchitecture.Application.Features.Categories.Commands.CreateCategory;
 using CleanArchitecture.Application.Features.Categories.Commands.DeleteCategory;
+using CleanArchitecture.Application.Features.Categories.Commands.DeleteCategoryImage;
 using CleanArchitecture.Application.Features.Categories.Commands.UpdateCategory;
+using CleanArchitecture.Application.Features.Categories.Commands.UploadCategoryImage;
 using CleanArchitecture.Application.Features.Categories.Common;
 using CleanArchitecture.Application.Features.Categories.Queries.GetCategories;
 using CleanArchitecture.Application.Features.Categories.Queries.GetCategoryById;
@@ -59,6 +62,32 @@ public sealed class CategoriesController : ControllerBase
         CancellationToken cancellationToken)
     {
         return Ok(await _mediator.Send(command with { Id = id }, cancellationToken));
+    }
+
+    [Authorize(Policy = "RequireAdmin")]
+    [HttpPost("{id:int}/image")]
+    public async Task<ActionResult<ImageUploadResultDto>> UploadImage(
+        int id,
+        IFormFile? file,
+        CancellationToken cancellationToken)
+    {
+        await using var stream = file?.OpenReadStream() ?? Stream.Null;
+        var command = new UploadCategoryImageCommand(
+            id,
+            stream,
+            file?.FileName ?? string.Empty,
+            file?.ContentType ?? string.Empty,
+            file?.Length ?? 0);
+
+        return Ok(await _mediator.Send(command, cancellationToken));
+    }
+
+    [Authorize(Policy = "RequireAdmin")]
+    [HttpDelete("{id:int}/image")]
+    public async Task<IActionResult> DeleteImage(int id, CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new DeleteCategoryImageCommand(id), cancellationToken);
+        return NoContent();
     }
 
     [Authorize(Policy = "RequireAdmin")]

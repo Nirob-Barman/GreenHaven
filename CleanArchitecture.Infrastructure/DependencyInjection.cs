@@ -1,6 +1,7 @@
 using CleanArchitecture.Application.Common.Interfaces;
 using CleanArchitecture.Infrastructure.Identity;
 using CleanArchitecture.Infrastructure.Identity.Entities;
+using CleanArchitecture.Infrastructure.Images;
 using CleanArchitecture.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -38,6 +39,9 @@ public static class DependencyInjection
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddScoped<IIdentityService, IdentityService>();
+
+        services.Configure<CloudinaryOptions>(configuration.GetSection(CloudinaryOptions.SectionName));
+        services.AddScoped<IImageStorage, CloudinaryImageStorage>();
 
         return services;
     }

@@ -56,6 +56,7 @@ public sealed class ExceptionHandlingMiddleware
             ForbiddenAccessException => CreateProblemDetails(context, StatusCodes.Status403Forbidden, "Forbidden", exception.Message),
             UnauthorizedAccessException => CreateProblemDetails(context, StatusCodes.Status401Unauthorized, "Unauthorized", exception.Message),
             DomainException => CreateProblemDetails(context, StatusCodes.Status400BadRequest, "Bad request", exception.Message),
+            ImageStorageException => CreateProblemDetails(context, StatusCodes.Status502BadGateway, "Image storage error", exception.Message),
             _ => CreateProblemDetails(context, StatusCodes.Status500InternalServerError, "Server error", "An unexpected error occurred.")
         };
     }
