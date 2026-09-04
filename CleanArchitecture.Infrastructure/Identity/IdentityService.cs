@@ -4,6 +4,8 @@ using System.Security.Cryptography;
 using System.Text;
 using CleanArchitecture.Application.Common.Interfaces;
 using CleanArchitecture.Application.Features.Auth.Common;
+using CleanArchitecture.Application.Features.Users.Common;
+using CleanArchitecture.Application.Common.Exceptions;
 using CleanArchitecture.Infrastructure.Identity.Entities;
 using CleanArchitecture.Infrastructure.Persistence;
 using FluentValidation;
@@ -138,6 +140,67 @@ public sealed class IdentityService : IIdentityService
         return await MapUserAsync(user, cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<AdminUserDto>> GetUsersAsync(CancellationToken cancellationToken)
+    {
+        var users = await _userManager.Users
+            .AsNoTracking()
+            .OrderBy(x => x.Email)
+            .ToListAsync(cancellationToken);
+
+        var result = new List<AdminUserDto>(users.Count);
+        foreach (var user in users)
+        {
+            result.Add(await MapAdminUserAsync(user));
+        }
+
+        return result;
+    }
+
+    public async Task<AdminUserDto> GetUserByIdAsync(string userId, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user is null)
+        {
+            throw new NotFoundException("User", userId);
+        }
+
+        return await MapAdminUserAsync(user);
+    }
+
+    public async Task<AdminUserDto> UpdateUserRolesAsync(
+        string userId,
+        IReadOnlyCollection<string> roles,
+        CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user is null)
+        {
+            throw new NotFoundException("User", userId);
+        }
+
+        foreach (var role in roles)
+        {
+            if (!await _userManager.IsInRoleAsync(user, role))
+            {
+                var roleResult = await _userManager.AddToRoleAsync(user, role);
+                EnsureIdentitySuccess(roleResult);
+            }
+        }
+
+        var currentRoles = await _userManager.GetRolesAsync(user);
+        var rolesToRemove = currentRoles
+            .Where(role => !roles.Contains(role, StringComparer.OrdinalIgnoreCase))
+            .ToArray();
+
+        if (rolesToRemove.Length > 0)
+        {
+            var removeResult = await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
+            EnsureIdentitySuccess(removeResult);
+        }
+
+        return await MapAdminUserAsync(user);
+    }
+
     private async Task<AuthResult> CreateAuthResultAsync(ApplicationUser user, CancellationToken cancellationToken)
     {
         var now = DateTimeOffset.UtcNow;
@@ -193,6 +256,26 @@ public sealed class IdentityService : IIdentityService
             user.PhoneNumber,
             user.Address,
             roles.ToArray());
+    }
+
+    private async Task<AdminUserDto> MapAdminUserAsync(ApplicationUser user)
+    {
+        var roles = await _userManager.GetRolesAsync(user);
+        return new AdminUserDto(
+            user.Id,
+            user.Email ?? string.Empty,
+            user.FullName,
+            user.PhoneNumber,
+            user.Address,
+            roles.ToArray());
+    }
+
+    private static void EnsureIdentitySuccess(IdentityResult result)
+    {
+        if (!result.Succeeded)
+        {
+            throw new ValidationException(string.Join("; ", result.Errors.Select(error => error.Description)));
+        }
     }
 
     private static string GenerateRefreshToken()

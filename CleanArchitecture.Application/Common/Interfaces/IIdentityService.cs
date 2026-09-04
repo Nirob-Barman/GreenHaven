@@ -1,4 +1,5 @@
 using CleanArchitecture.Application.Features.Auth.Common;
+using CleanArchitecture.Application.Features.Users.Common;
 
 namespace CleanArchitecture.Application.Common.Interfaces;
 
@@ -27,5 +28,17 @@ public interface IIdentityService
     Task<CurrentUserDto> UpdateCurrentUserAsync(
         string userId,
         UpdateProfileRequest request,
+        CancellationToken cancellationToken);
+
+    Task<IReadOnlyCollection<AdminUserDto>> GetUsersAsync(
+        CancellationToken cancellationToken);
+
+    Task<AdminUserDto> GetUserByIdAsync(
+        string userId,
+        CancellationToken cancellationToken);
+
+    Task<AdminUserDto> UpdateUserRolesAsync(
+        string userId,
+        IReadOnlyCollection<string> roles,
         CancellationToken cancellationToken);
 }
