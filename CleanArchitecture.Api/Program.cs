@@ -5,6 +5,7 @@ using CleanArchitecture.Application.Common.Interfaces;
 using CleanArchitecture.Application.Common.Models;
 using CleanArchitecture.Infrastructure;
 using CleanArchitecture.Infrastructure.Identity;
+using CleanArchitecture.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -98,6 +99,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 await IdentitySeeder.SeedAsync(app.Services);
+
+if (app.Environment.IsDevelopment()
+    && app.Configuration.GetValue<bool>("SeedSampleData:Enabled"))
+{
+    await SampleDataSeeder.SeedAsync(app.Services);
+}
 
 app.MapControllers();
 
