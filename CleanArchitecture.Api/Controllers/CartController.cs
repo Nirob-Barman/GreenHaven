@@ -1,10 +1,12 @@
 using CleanArchitecture.Application.Features.Carts.Commands.AddCartItem;
 using CleanArchitecture.Application.Features.Carts.Commands.ClearCart;
 using CleanArchitecture.Application.Features.Carts.Commands.RemoveCartItem;
+using CleanArchitecture.Application.Features.Carts.Commands.MergeCart;
 using CleanArchitecture.Application.Features.Carts.Commands.UpdateCartItemQuantity;
 using CleanArchitecture.Application.Features.Carts.Common;
 using CleanArchitecture.Application.Features.Carts.Queries.GetCart;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CleanArchitecture.Api.Controllers;
@@ -59,5 +61,12 @@ public sealed class CartController : ControllerBase
     {
         await _mediator.Send(new ClearCartCommand(cartKey), cancellationToken);
         return NoContent();
+    }
+
+    [Authorize(Policy = "RequireCustomer")]
+    [HttpPost("{cartKey}/merge")]
+    public async Task<ActionResult<CartDto>> Merge(string cartKey, CancellationToken cancellationToken)
+    {
+        return Ok(await _mediator.Send(new MergeCartCommand(cartKey), cancellationToken));
     }
 }
